@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="投資情報">
+<title>投資情報站</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #546068;
+    --bg2: #4a565e;
+    --bg3: #404c54;
+    --border: rgba(255,255,255,0.12);
+    --border2: rgba(255,255,255,0.20);
+    --text: #f0f2f4;
+    --text2: #c0c8cc;
+    --text3: #8a9aa0;
+    --accent: #4f8cff;
+    --accent2: #7c5cfc;
+    --green: #22d3a5;
+    --red: #ff5b6b;
+    --amber: #f59e0b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans TC', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(84,96,104,0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 12px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #4f8cff, #7c5cfc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    margin-right: 5px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:0.3; }
+  }
+
+  /* Nav tabs */
+  .nav {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 4px;
+    padding: 10px 16px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+  }
+  .nav::-webkit-scrollbar { display:none; }
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 0.5px solid var(--border2);
+    color: var(--text2);
+    background: transparent;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .nav-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* Pages */
+  .page { display: none; padding: 0 0 80px; }
+  .page.active { display: block; }
+
+  /* Section */
+  .section { padding: 16px 16px 0; }
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Market cards row */
+  .market-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .market-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .market-label { font-size: 11px; color: var(--text3); margin-bottom:4px; }
+  .market-val {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .market-chg {
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .up { color: var(--green); }
+  .dn { color: var(--red); }
+  .neu { color: var(--text3); }
+
+  /* Big stat */
+  .stat-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-num { font-size: 22px; font-weight: 700; font-family: var(--mono); }
+  .stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* News brief card */
+  .brief-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .brief-card:active { background: var(--bg3); }
+  .brief-seg {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 100px;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .seg-top { background: rgba(79,140,255,0.15); color: var(--accent); }
+  .seg-mid { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .seg-bot { background: rgba(255,91,107,0.15); color: var(--red); }
+  .brief-title {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .brief-points { list-style: none; }
+  .brief-points li {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 3px 0;
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.6;
+  }
+  .brief-points li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text3);
+  }
+  .brief-points li strong { color: var(--text); font-weight: 500; }
+  .brief-time { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top:8px; }
+
+  /* Stock table */
+  .stock-list { margin-bottom: 16px; }
+  .stock-item {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .stock-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .stock-info { flex: 1; }
+  .stock-name { font-size: 14px; font-weight: 500; }
+  .stock-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .stock-right { text-align: right; }
+  .stock-cost { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .stock-status {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-top: 3px;
+    display: inline-block;
+  }
+  .status-watch { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .status-hold { background: rgba(34,211,165,0.15); color: var(--green); }
+  .status-cash { background: rgba(79,140,255,0.15); color: var(--accent); }
+
+  /* Heat bars */
+  .heat-list { margin-bottom: 16px; }
+  .heat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .heat-item:last-child { border-bottom: none; }
+  .heat-name { font-size: 13px; font-weight: 500; min-width: 90px; }
+  .heat-track { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .heat-fill { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(.16,1,.3,1); }
+  .heat-score { font-family: var(--mono); font-size: 12px; color: var(--text3); min-width: 30px; text-align: right; }
+
+  /* Commodity */
+  .commodity-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .commodity-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .commodity-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .commodity-val { font-family: var(--mono); font-size: 16px; font-weight: 500; }
+  .commodity-unit { font-size: 10px; color: var(--text3); }
+
+  /* Cal */
+  .cal-list { margin-bottom: 16px; }
+  .cal-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+    align-items: flex-start;
+  }
+  .cal-item:last-child { border-bottom: none; }
+  .cal-date-box {
+    min-width: 44px;
+    text-align: center;
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 6px 4px;
+  }
+  .cal-month { font-size: 9px; color: var(--text3); }
+  .cal-day { font-size: 18px; font-weight: 700; font-family: var(--mono); line-height: 1.1; }
+  .cal-body { flex: 1; }
+  .cal-event { font-size: 13px; font-weight: 500; line-height: 1.4; }
+  .cal-note { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .cal-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 100px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .tag-alert { background: rgba(255,91,107,0.15); color: var(--red); }
+  .tag-info { background: rgba(79,140,255,0.15); color: var(--accent); }
+
+  /* Action button */
+  .action-btn {
+    display: block;
+    width: 100%;
+    padding: 13px 16px;
+    background: rgba(79,140,255,0.1);
+    border: 0.5px solid rgba(79,140,255,0.3);
+    border-radius: 12px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: all 0.18s;
+    font-family: var(--sans);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .action-btn:active { background: rgba(79,140,255,0.2); }
+  .action-btn .arr { font-size: 16px; opacity: 0.6; }
+
+  /* Floating update btn */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(79,140,255,0.4);
+    z-index: 200;
+    transition: transform 0.15s;
+  }
+  .fab:active { transform: scale(0.93); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 88px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-size: 12px;
+    color: var(--text2);
+    opacity: 0;
+    transition: all 0.25s;
+    white-space: nowrap;
+    z-index: 300;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* How to use banner */
+  .how-banner {
+    background: var(--bg2);
+    border: 0.5px solid rgba(79,140,255,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .how-title { font-size: 13px; font-weight: 500; color: var(--accent); margin-bottom: 8px; }
+  .how-step {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 3px 0;
+    display: flex;
+    gap: 8px;
+  }
+  .how-num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(79,140,255,0.15);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">投資情報站</div>
+    <div class="header-date" id="hdate"></div>
+  </div>
+  <div style="font-size:12px;color:var(--text3)">
+    <span class="live-dot"></span>每日更新
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="switchPage('home',this)">今日總覽</button>
+  <button class="nav-tab" onclick="switchPage('brief',this)">節目簡報</button>
+  <button class="nav-tab" onclick="switchPage('stocks',this)">我的持股</button>
+  <button class="nav-tab" onclick="switchPage('heat',this)">產業熱度</button>
+  <button class="nav-tab" onclick="switchPage('cal',this)">財經日曆</button>
+  <button class="nav-tab" onclick="switchPage('how',this)">使用說明</button>
+</div>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="section">
+    <div class="section-title">市場溫度計</div>
+    <div class="market-grid">
+      <div class="market-card">
+        <div class="market-label">台股加權</div>
+        <div class="market-val up">34,218</div>
+        <div class="market-chg up">▲ 1,531 (+4.68%)</div>
+      </div>
+      <div class="market-card">
+        <div class="market-label">S&P 500</div>
+        <div class="market-val up">5,512</div>
+        <div class="market-chg up">▲ 2.30%</div>
+      </div>
+      <div class="market-card">
+        <div class="market-label">VIX 恐慌</div>
+        <div class="market-val amber">22.4</div>
+        <div class="market-chg dn">▼ 降溫中</div>
+      </div>
+      <div class="market-card">
+        <div class="market-label">美元指數</div>
+        <div class="market-val">101.8</div>
+        <div class="market-chg dn">▼ -0.6%</div>
+      </div>
+    </div>
+
+    <div class="section-title">今日關鍵數字</div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num up">1,177億</div>
+        <div class="stat-label">外資今日買超</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--amber)">4/16</div>
+        <div class="stat-label">台積電法說倒數</div>
+      </div>
+    </div>
+
+    <div class="section-title">今日最熱話題</div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--accent);font-weight:500;margin-bottom:6px">台股</div>
+      <div style="font-size:14px;font-weight:500;line-height:1.5;margin-bottom:8px">美伊停火兩週 + 信驊漲停 12,615 元創台股新紀錄</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">台股暴漲 1,531 點重登 34,000 點，外資史上第二大買超，面板雙雄群創、友達外資大買居冠</div>
+    </div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--accent2);font-weight:500;margin-bottom:6px">美股</div>
+      <div style="font-size:14px;font-weight:500;line-height:1.5;margin-bottom:8px">道瓊開盤漲逾 1,300 點，台積電 ADR 大漲 5.75%</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">費城半導體指數漲 5.4%，油價暴跌 17% 通膨降溫，Fed 降息預期回升</div>
+    </div>
+
+    <button class="action-btn" onclick="openClaude('幫我掃描今天台股美股最新動態，並結合我的持股給建議')">
+      問 Claude：今日完整市場分析 <span class="arr">↗</span>
+    </button>
+  </div>
+</div>
+
+<!-- BRIEF PAGE -->
+<div class="page" id="page-brief">
+  <div class="section">
+    <div class="section-title">錢線百分百 · 2026.04.08</div>
+
+    <div class="brief-card" onclick="openClaude('錢線百分百今日上集主題：台股一棒定江山，請深入分析台積電4/16法說前的布局策略')">
+      <span class="brief-seg seg-top">上集 00:00</span>
+      <div class="brief-title">台股一棒定江山！專家斷言：還沒漲完<br>台積法說倒數！外資喊買 2,750 元</div>
+      <ul class="brief-points">
+        <li>台股暴漲 <strong>1,531 點</strong>，外資買超 <strong>1,177 億</strong>，史上第二大</li>
+        <li>觸發點：川普宣布暫停攻擊伊朗兩週，風險偏好全面回升</li>
+        <li>專家斷言：<strong>「這波還沒漲完」</strong>，外資持續回補中</li>
+        <li>台積電法說 <strong>4/16</strong> 倒數，外資目標價上看 2,750 元</li>
+      </ul>
+      <div class="brief-time">點擊深入分析 →</div>
+    </div>
+
+    <div class="brief-card" onclick="openClaude('錢線百分百中集：亂世英雄升級版，外資今日大買群創友達，這波反彈的持續性如何評估？')">
+      <span class="brief-seg seg-mid">中集 20:12</span>
+      <div class="brief-title">亂世英雄升級版！<br>外資狂買群創 13 萬張、友達 9.6 萬張</div>
+      <ul class="brief-points">
+        <li>群創（3481）、友達（2409）外資買超位居全市場 <strong>第一、二名</strong></li>
+        <li>記憶體族群同步走強，旺宏（2337）攻上漲停</li>
+        <li>策略：找「打也受惠、不打也受惠」的雙贏基本面標的</li>
+      </ul>
+      <div class="brief-time">點擊深入分析 →</div>
+    </div>
+
+    <div class="brief-card" onclick="openClaude('錢線百分百下集：美捍衛經濟霸權還是E型衰退逼近？費半日經雙認證對台股意義，以及兩週停火期的操作策略')">
+      <span class="brief-seg seg-bot">下集</span>
+      <div class="brief-title">美捍衛經濟霸權？還是「E型衰退」進逼？<br>費半 + 日經雙認證台股</div>
+      <ul class="brief-points">
+        <li>油價 WTI 暴跌 <strong>17%</strong>，通膨降溫，降息預期升溫</li>
+        <li>費半漲 5.4% + 日經同步噴出 = 台股繼續強的指標訊號</li>
+        <li><strong>風險提醒：</strong>兩週停火期限後局勢仍有不確定性</li>
+        <li>建議：做好部位管理，不宜全倉追高</li>
+      </ul>
+      <div class="brief-time">點擊深入分析 →</div>
+    </div>
+
+    <div class="section-title" style="margin-top:4px">與我的持股關聯</div>
+    <div style="background:var(--bg2);border:0.5px solid rgba(79,140,255,0.2);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        <div style="margin-bottom:6px"><span style="color:var(--text);font-weight:500">巧新（1563）：</span>大盤暴漲帶動工業零件族群回血，轉型半導體零件的基本面不變，觀察 5/20 股東會</div>
+        <div style="margin-bottom:6px"><span style="color:var(--text);font-weight:500">日幣部位：</span>停火消息使日圓走弱，200 萬日幣換匯時機相對有利，可關注 2644.JP</div>
+        <div><span style="color:var(--text);font-weight:500">4/16 台積電法說：</span>節目點名近期最重要事件，法說前外資積極買盤</div>
+      </div>
+    </div>
+    <button class="action-btn" onclick="openClaude('根據錢線百分百今日分析，結合我的巧新持股6000股成本61元以及200萬日幣部位，現在最該做什麼操作？')">
+      針對我的持股給操作建議 <span class="arr">↗</span>
+    </button>
+  </div>
+</div>
+
+<!-- STOCKS PAGE -->
+<div class="page" id="page-stocks">
+  <div class="section">
+    <div class="section-title">我的持股 & 資產</div>
+    <div class="stock-list">
+      <div class="stock-item">
+        <div class="stock-icon">1563</div>
+        <div class="stock-info">
+          <div class="stock-name">巧新</div>
+          <div class="stock-sub">6,000 股 · 成本 61 元</div>
+        </div>
+        <div class="stock-right">
+          <div class="stock-cost">~43 元</div>
+          <span class="stock-status status-watch">觀察中</span>
+        </div>
+      </div>
+      <div class="stock-item">
+        <div class="stock-icon">JPY</div>
+        <div class="stock-info">
+          <div class="stock-name">日幣現鈔</div>
+          <div class="stock-sub">待配置 · 關注 USD/JPY</div>
+        </div>
+        <div class="stock-right">
+          <div class="stock-cost">200 萬</div>
+          <span class="stock-status status-cash">待配置</span>
+        </div>
+      </div>
+      <div class="stock-item">
+        <div class="stock-icon">TWD</div>
+        <div class="stock-info">
+          <div class="stock-name">巧新退還現金</div>
+          <div class="stock-sub">減資入帳 · 研究標的中</div>
+        </div>
+        <div class="stock-right">
+          <div class="stock-cost">~2.7萬</div>
+          <span class="stock-status status-cash">待入帳</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">快速分析持股</div>
+    <button class="action-btn" onclick="openClaude('幫我分析巧新1563今日最新狀況，含籌碼、減資進度、轉型半導體零件進展')">
+      分析巧新最新狀況 <span class="arr">↗</span>
+    </button>
+    <button class="action-btn" onclick="openClaude('我有200萬日幣，目前日圓走勢如何？現在投入2644.JP日本半導體ETF的時機評估')">
+      日幣部位操作建議 <span class="arr">↗</span>
+    </button>
+    <button class="action-btn" onclick="openClaude('幫我篩選目前EPS約8-10元、股價100-200元、本益比低於15倍的台股標的，適合放2.7萬現金')">
+      2.7萬現金選股建議 <span class="arr">↗</span>
+    </button>
+
+    <div class="section-title" style="margin-top:8px">我的觀察名單（點擊分析）</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <span style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;cursor:pointer" onclick="openClaude('用工程師三步驟分析奇鋐3017的最新狀況：護城河、大戶籌碼、領先指標')">奇鋐 3017</span>
+      <span style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;cursor:pointer" onclick="openClaude('分析邁科6831的液冷業務最新進展與籌碼狀況')">邁科 6831</span>
+      <span style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;cursor:pointer" onclick="openClaude('分析胡連6279最新狀況，大陸營收比重與歐美市場進展')">胡連 6279</span>
+      <span style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;cursor:pointer" onclick="openClaude('分析眾達KY 4977的CPO業務進展與大戶籌碼')">眾達-KY 4977</span>
+      <span style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;cursor:pointer" onclick="openClaude('分析台泥1101儲能與電池業務2026年最新進展')">台泥 1101</span>
+      <span style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;cursor:pointer" onclick="openClaude('分析大中6435 MOSFET業務在AI PC換機潮中的獲利展望')">大中 6435</span>
+    </div>
+  </div>
+</div>
+
+<!-- HEAT PAGE -->
+<div class="page" id="page-heat">
+  <div class="section">
+    <div class="section-title">產業熱度雷達（點擊深入）</div>
+    <div class="heat-list" id="heat-list"></div>
+
+    <div class="section-title" style="margin-top:4px">原物料 & 貴金屬</div>
+    <div class="commodity-grid">
+      <div class="commodity-card">
+        <div class="commodity-name">黃金 XAU/USD</div>
+        <div class="commodity-val up">3,218</div>
+        <div class="commodity-unit">美元/盎司</div>
+      </div>
+      <div class="commodity-card">
+        <div class="commodity-name">WTI 原油</div>
+        <div class="commodity-val dn">93.4</div>
+        <div class="commodity-unit">美元/桶 ▼17%</div>
+      </div>
+      <div class="commodity-card">
+        <div class="commodity-name">銅 HG</div>
+        <div class="commodity-val">4.52</div>
+        <div class="commodity-unit">美元/磅</div>
+      </div>
+      <div class="commodity-card">
+        <div class="commodity-name">鎢 (參考)</div>
+        <div class="commodity-val up">高檔</div>
+        <div class="commodity-unit">聯友金屬受惠</div>
+      </div>
+    </div>
+    <button class="action-btn" onclick="openClaude('幫我查詢黃金、銅、鎢、原油今日最新報價與投資意義')">
+      查詢即時原物料報價 <span class="arr">↗</span>
+    </button>
+  </div>
+</div>
+
+<!-- CALENDAR PAGE -->
+<div class="page" id="page-cal">
+  <div class="section">
+    <div class="section-title">重要財經日曆</div>
+    <div class="cal-list">
+      <div class="cal-item">
+        <div class="cal-date-box">
+          <div class="cal-month">APR</div>
+          <div class="cal-day" style="color:var(--red)">16</div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-event">台積電法人說明會</div>
+          <div class="cal-note">外資目標價 2,750 元，AI 資本支出展望最關鍵</div>
+          <span class="cal-tag tag-alert">高度關注</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date-box">
+          <div class="cal-month">APR</div>
+          <div class="cal-day" style="color:var(--amber)">22</div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-event">美伊停火兩週到期</div>
+          <div class="cal-note">談判結果決定市場下一波走向，需密切追蹤</div>
+          <span class="cal-tag tag-alert">地緣政治</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date-box">
+          <div class="cal-month">MAY</div>
+          <div class="cal-day" style="color:var(--accent)">10</div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-event">台股月營收公告</div>
+          <div class="cal-note">每月 10 日必追，觀察各持股 YoY 成長</div>
+          <span class="cal-tag tag-info">每月固定</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date-box">
+          <div class="cal-month">MAY</div>
+          <div class="cal-day" style="color:var(--amber)">20</div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-event">巧新（1563）股東會</div>
+          <div class="cal-note">減資 25% 正式生效，退還現金到帳</div>
+          <span class="cal-tag tag-alert">持股相關</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date-box">
+          <div class="cal-month">每季</div>
+          <div class="cal-day" style="color:var(--text3);font-size:13px">財報</div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-event">季度財報季</div>
+          <div class="cal-note">重點看毛利率變化與 EPS 是否達預期</div>
+          <span class="cal-tag tag-info">定期追蹤</span>
+        </div>
+      </div>
+    </div>
+    <button class="action-btn" onclick="openClaude('幫我整理本週與下週最重要的財經事件與對台股的影響')">
+      本週財經事件分析 <span class="arr">↗</span>
+    </button>
+  </div>
+</div>
+
+<!-- HOW TO USE PAGE -->
+<div class="page" id="page-how">
+  <div class="section">
+    <div class="section-title">每日使用流程</div>
+    <div class="how-banner">
+      <div class="how-title">每天只需 15 分鐘</div>
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div>早上開 Claude，說「幫我掃描今天台股美股」→ 貼回「今日總覽」</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div>晚上 11 點後，說「幫我整理今天錢線百分百內容」→ 貼回「節目簡報」</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div>每月 10 日，說「幫我分析本月各持股月營收」→ 更新「我的持股」</div>
+      </div>
+    </div>
+
+    <div class="section-title">存到手機桌面</div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text)">iPhone (Safari)</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        1. 用 Safari 開啟此檔案<br>
+        2. 點底部的「分享」按鈕<br>
+        3. 選「加入主畫面」<br>
+        4. 命名為「投資情報站」→ 加入
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text)">Android (Chrome)</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        1. 用 Chrome 開啟此檔案<br>
+        2. 點右上角「⋮」選單<br>
+        3. 選「加入主畫面」或「安裝應用程式」<br>
+        4. 確認加入
+      </div>
+    </div>
+
+    <div class="section-title">快速問 Claude 的句型</div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text2);line-height:2">
+        <div>「幫我掃描今天台股美股市場動態」</div>
+        <div>「幫我整理今天錢線百分百的內容」</div>
+        <div>「用三步驟審核 <em>[公司名]</em>」</div>
+        <div>「今日大戶籌碼最乾淨的台股是？」</div>
+        <div>「<em>[公司名]</em> 的千張大戶本週動向」</div>
+      </div>
+    </div>
+
+    <button class="action-btn" onclick="openClaude('我想更新投資情報站App的持股資料，我新買了一檔股票，請協助我')">
+      更新持股資料 <span class="arr">↗</span>
+    </button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openClaude('幫我掃描今天台股美股最新市場動態，包含錢線百分百節目重點，並結合我的巧新持股和日幣部位給建議')" title="今日快速掃描">
+  ↗
+</button>
+
+<div class="toast" id="toast">已開啟 Claude 對話</div>
+
+<script>
+  const CLAUDE_URL = 'https://claude.ai/new';
+
+  function switchPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function openClaude(prompt) {
+    const url = CLAUDE_URL + '?q=' + encodeURIComponent(prompt);
+    window.open(url, '_blank');
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  const d = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('hdate').textContent =
+    d.getFullYear() + '.' +
+    String(d.getMonth()+1).padStart(2,'0') + '.' +
+    String(d.getDate()).padStart(2,'0') +
+    ' 週' + days[d.getDay()];
+
+  const industries = [
+    { name: 'AI算力/散熱', score: 92, color: '#4f8cff', prompt: '分析AI算力與散熱產業本週動態，奇鋐邁科最新籌碼' },
+    { name: '光通訊/CPO', score: 78, color: '#7c5cfc', prompt: '分析光通訊CPO產業動態，眾達KY與華星光今日表現' },
+    { name: '車用電子', score: 63, color: '#22d3a5', prompt: '分析車用連接器產業動態，胡連最新狀況' },
+    { name: '日本半導體', score: 74, color: '#f59e0b', prompt: '分析日本半導體ETF 2644.JP今日走勢與日幣匯率' },
+    { name: '再生能源', score: 58, color: '#ff5b6b', prompt: '分析再生能源儲能產業動態，台泥電池業務進展' },
+    { name: '貴金屬循環', score: 65, color: '#22d3a5', prompt: '分析鎢鈷貴金屬報價與聯友金屬最新狀況' },
+  ];
+
+  const hl = document.getElementById('heat-list');
+  industries.forEach(ind => {
+    const div = document.createElement('div');
+    div.className = 'heat-item';
+    div.style.cursor = 'pointer';
+    div.onclick = () => openClaude(ind.prompt);
+    div.innerHTML = `
+      <div class="heat-name">${ind.name}</div>
+      <div class="heat-track"><div class="heat-fill" style="width:0%;background:${ind.color}" data-w="${ind.score}%"></div></div>
+      <div class="heat-score">${ind.score}</div>`;
+    hl.appendChild(div);
+  });
+
+  setTimeout(() => {
+    document.querySelectorAll('.heat-fill').forEach(el => {
+      el.style.width = el.dataset.w;
+    });
+  }, 300);
+</script>
+</body>
+</html>
